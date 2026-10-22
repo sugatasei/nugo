@@ -1,0 +1,15 @@
+<main class="container">
+    <article>
+        {{#if cover}}<img src="{{cover}}" alt="">{{/if}}
+
+        <header>
+            <h1>{{title}}</h1>
+            <p>Par {{site.author}} — <time datetime="{{date}}">{{formatDate date}}</time></p>
+            <p><a href="{{monthUrl date}}">Archives — {{formatMonth date}}</a></p>
+        </header>
+
+        {{> tags}}
+
+        {{{entry.html}}}
+    </article>
+</main>

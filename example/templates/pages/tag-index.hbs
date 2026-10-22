@@ -1,0 +1,15 @@
+<main class="container">
+    <article>
+        <header>
+            <h1>Tags</h1>
+        </header>
+
+        <ul>
+            {{#each terms}}
+                <li><a href="{{tagUrl label}}">{{label}}</a> — {{count items}}</li>
+            {{else}}
+                <li>Aucun tag disponible.</li>
+            {{/each}}
+        </ul>
+    </article>
+</main>

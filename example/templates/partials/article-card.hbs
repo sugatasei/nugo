@@ -1,0 +1,16 @@
+<article>
+    {{#if data.cover}}<img src="{{data.cover}}" alt="" loading="lazy">{{/if}}
+
+    <header>
+        <h2><a href="{{url}}">{{data.title}}</a></h2>
+        <p><time datetime="{{data.date}}">{{formatDate data.date}}</time></p>
+    </header>
+
+    {{#if data.summary}}<p>{{data.summary}}</p>{{/if}}
+
+    {{> tags data}}
+
+    <footer>
+        <a href="{{url}}">Lire l’article</a>
+    </footer>
+</article>

@@ -1,0 +1,5 @@
+{{#if tags.length}}
+<ul class="tags" aria-label="Tags">
+    {{#each tags}}<li><a href="{{tagUrl this}}">{{this}}</a></li>{{/each}}
+</ul>
+{{/if}}

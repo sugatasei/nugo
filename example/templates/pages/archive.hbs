@@ -1,0 +1,13 @@
+<main class="container">
+    <header>
+        <h1>{{title}}</h1>
+    </header>
+
+    <section aria-label="Liste des articles">
+        {{#each posts}}
+            {{> article-card}}
+        {{/each}}
+    </section>
+
+    {{> archive-navigation}}
+</main>

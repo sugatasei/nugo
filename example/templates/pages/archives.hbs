@@ -1,0 +1,15 @@
+<main class="container">
+    <article>
+        <header>
+            <h1>Archives</h1>
+        </header>
+
+        <ul>
+            {{#each months}}
+                <li><a href="{{url}}">{{label}}</a> — {{count items}}</li>
+            {{else}}
+                <li>Aucune archive disponible.</li>
+            {{/each}}
+        </ul>
+    </article>
+</main>

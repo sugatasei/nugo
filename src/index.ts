@@ -1,0 +1,25 @@
+import type { ConfigSetup } from "./types.ts";
+
+export { z } from "zod";
+export { Builder, type BuildResult } from "./build/Builder.ts";
+export { ConfigLoader, type ConfigOverrides } from "./config/ConfigLoader.ts";
+export type { ResolvedConfig } from "./config/ConfigBuilder.ts";
+export type { MarkdownEntry } from "./markdown/MarkdownRenderer.ts";
+export { MarkdownText } from "./markdown/MarkdownText.ts";
+export {
+    groupBy,
+    groupByDate,
+    latestUpdate,
+    paginate,
+    taxonomy,
+    type DatePrecision,
+    type Group,
+    type Pagination,
+    type Term,
+} from "./helpers/collections.ts";
+export { absoluteUrl, escapeXml, safeJson, slugify, type SlugifyOptions } from "./helpers/text.ts";
+export type * from "./types.ts";
+
+export function defineConfig(setup: ConfigSetup): ConfigSetup {
+    return setup;
+}

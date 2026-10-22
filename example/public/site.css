@@ -1,0 +1,57 @@
+article {
+    overflow-wrap: anywhere;
+}
+
+article table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.tags li {
+    margin: 0;
+    padding: 0.125rem 0.5rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    font-size: 0.875rem;
+    list-style: none;
+}
+
+.callout {
+    border-left: 0.25rem solid var(--pico-primary);
+}
+
+.callout-tip {
+    border-left-color: var(--pico-ins-color);
+}
+
+.callout-warning {
+    border-left-color: var(--pico-del-color);
+}
+
+#search-dialog article {
+    width: min(42rem, calc(100vw - 2rem));
+}
+
+#search-dialog header p {
+    margin-bottom: 0;
+}
+
+/* Interface Pagefind branchée sur les variables de Pico */
+#search .pagefind-ui {
+    --pagefind-ui-primary: var(--pico-primary);
+    --pagefind-ui-text: var(--pico-color);
+    --pagefind-ui-background: var(--pico-background-color);
+    --pagefind-ui-border: var(--pico-muted-border-color);
+    --pagefind-ui-tag: var(--pico-card-sectioning-background-color);
+    --pagefind-ui-font: var(--pico-font-family);
+    --pagefind-ui-border-radius: var(--pico-border-radius);
+}

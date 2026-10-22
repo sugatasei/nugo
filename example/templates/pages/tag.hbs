@@ -1,0 +1,11 @@
+<main class="container">
+    <header>
+        <h1>Articles avec le tag « {{term.label}} »</h1>
+    </header>
+
+    <section aria-label="Liste des articles">
+        {{#each posts}}
+            {{> article-card}}
+        {{/each}}
+    </section>
+</main>

@@ -1,0 +1,19 @@
+{
+    "name": "nugo-example",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "nugo build",
+        "dev": "nugo dev"
+    },
+    "dependencies": {
+        "@picocss/pico": "^2.1.1",
+        "nugo": "file:..",
+        "unist-util-visit": "^5.1.0"
+    },
+    "devDependencies": {
+        "@types/mdast": "^4.0.4",
+        "@types/node": "^26.2.0",
+        "typescript": "^7.0.2"
+    }
+}

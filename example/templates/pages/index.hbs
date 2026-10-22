@@ -1,0 +1,16 @@
+<main class="container">
+    <header>
+        <h1>Derniers articles</h1>
+    </header>
+
+    <section aria-label="Liste des derniers articles">
+        {{#each posts}}
+            {{> article-card}}
+        {{else}}
+            <p>Aucun article publié.</p>
+        {{/each}}
+    </section>
+
+    {{> pagination pagination}}
+    <p><a href="/archives/">Consulter toutes les archives</a></p>
+</main>

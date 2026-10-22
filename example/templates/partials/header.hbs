@@ -1,0 +1,22 @@
+<header class="container">
+    <nav aria-label="Navigation principale">
+        <ul>
+            <li><strong><a href="/">{{site.title}}</a></strong></li>
+        </ul>
+        <ul>
+            <li><a href="/archives/">Archives</a></li>
+            <li><a href="/tags/">Tags</a></li>
+            <li><button id="search-open" class="outline" type="button">Rechercher</button></li>
+        </ul>
+    </nav>
+
+    <dialog id="search-dialog" aria-labelledby="search-title">
+        <article>
+            <header>
+                <button id="search-close" type="button" aria-label="Fermer" rel="prev"></button>
+                <p id="search-title"><strong>Rechercher dans le site</strong></p>
+            </header>
+            <div id="search"></div>
+        </article>
+    </dialog>
+</header>

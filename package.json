@@ -1,0 +1,55 @@
+{
+    "name": "nugo",
+    "version": "0.1.0",
+    "description": "Générateur de site statique extensible, inspiré de Hugo et Eleventy",
+    "license": "MIT",
+    "type": "module",
+    "author": {
+        "name": "Mathieu Froehly",
+        "email": "mathieu.froehly@gmail.com"
+    },
+    "engines": {
+        "node": ">=24"
+    },
+    "bin": {
+        "nugo": "dist/cli.js"
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        },
+        "./plugins": {
+            "types": "./dist/plugins/index.d.ts",
+            "default": "./dist/plugins/index.js"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "prepare": "tsc",
+        "typecheck": "tsc --noEmit && tsc -p test",
+        "test": "node --test \"test/**/*.test.ts\""
+    },
+    "dependencies": {
+        "handlebars": "^4.7.9",
+        "mdast-util-to-hast": "^13.2.1",
+        "pagefind": "^1.5.2",
+        "rehype-stringify": "^10.0.1",
+        "remark-gfm": "^4.0.1",
+        "remark-parse": "^11.0.0",
+        "remark-rehype": "^11.1.2",
+        "unified": "^11.0.5",
+        "unist-util-visit": "^5.1.0",
+        "vfile": "^6.0.3",
+        "yaml": "^2.9.0",
+        "zod": "^4.4.3"
+    },
+    "devDependencies": {
+        "@types/mdast": "^4.0.4",
+        "@types/node": "^26.2.0",
+        "typescript": "^7.0.2"
+    }
+}

@@ -1,0 +1,7 @@
+{{#if next}}<nav aria-label="Pagination">
+    <ul><li><a href="{{next}}">← Articles plus anciens</a></li></ul>
+    <ul>{{#if previous}}<li><a href="{{previous}}">Articles plus récents →</a></li>{{/if}}</ul>
+</nav>{{else}}{{#if previous}}<nav aria-label="Pagination">
+    <ul></ul>
+    <ul><li><a href="{{previous}}">Articles plus récents →</a></li></ul>
+</nav>{{/if}}{{/if}}
