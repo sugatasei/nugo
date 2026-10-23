@@ -142,6 +142,7 @@ Aucun de ces plugins ne produit de HTML.
 | `robots({ rules?, sitemap? })` | `robots.txt` |
 | `securityTxt({ contact, preferredLanguages? })` | `.well-known/security.txt` |
 | `search({ language, collections?, sections?, meta?, filters?, sort? })` | Index [Pagefind](https://pagefind.app) et son interface dans `pagefind/` |
+| `frenchSpacing()` | Rend insécables les espaces de la typographie française (fine avant `; ! ? »`, normale avant `:` et après `«`), dans le texte Markdown seulement. |
 | `noH1()` | Fait échouer le build si le corps d'un article contient un `#` (quand le gabarit affiche déjà le titre). |
 
 ## Étendre le moteur : un exemple

@@ -1,3 +1,4 @@
+export { frenchSpacing } from "./frenchSpacing.ts";
 export { noH1 } from "./noH1.ts";
 export { robots, type RobotsOptions } from "./robots.ts";
 export { rss, type RssOptions } from "./rss.ts";

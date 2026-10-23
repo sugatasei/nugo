@@ -6,7 +6,7 @@ Contexte persistant du projet, à tenir à jour à chaque étape terminée.
 
 Moteur de site statique distribué comme dépendance git (`git+https://github.com/sugatasei/nugo.git`, compilé par `prepare`). Il est consommé par un site qui fournit `nugo.config.ts`, ses gabarits, ses styles et ses extensions.
 
-Règle centrale : **le moteur ne contient ni gabarit, ni CSS, ni libellé, ni locale codée en dur.** Toute présentation (HTML, textes, formats de date, routes d'archives et de tags) vit dans le site. Les plugins fournis (`src/plugins`) ne produisent que des fichiers techniques : RSS, sitemap, robots, security.txt, index de recherche Pagefind.
+Règle centrale : **le moteur ne contient ni gabarit, ni CSS, ni libellé, ni locale codée en dur.** Toute présentation (HTML, textes, formats de date, routes d'archives et de tags) vit dans le site. Les plugins fournis (`src/plugins`) ne produisent que des fichiers techniques : RSS, sitemap, robots, security.txt, index de recherche Pagefind. Exceptions optionnelles sur le Markdown : `noH1` (contrôle) et `frenchSpacing` (espaces insécables, à activer par le site).
 
 ## Structure
 
