@@ -6,7 +6,7 @@ Contexte persistant du projet, à tenir à jour à chaque étape terminée.
 
 Moteur de site statique distribué comme dépendance git (`git+https://github.com/sugatasei/nugo.git`, compilé par `prepare`). Il est consommé par un site qui fournit `nugo.config.ts`, ses gabarits, ses styles et ses extensions.
 
-Règle centrale : **le moteur ne contient ni gabarit, ni CSS, ni libellé, ni locale codée en dur.** Toute présentation (HTML, textes, formats de date, routes d'archives et de tags) vit dans le site. Les plugins fournis (`src/plugins`) ne produisent que des fichiers techniques : RSS, sitemap, robots, security.txt, index de recherche Pagefind, variantes d'images. Exceptions optionnelles sur le Markdown : `noH1` (contrôle), `frenchSpacing` (espaces insécables) et `images` (`<img>` local → `<picture>`), à activer par le site.
+Règle centrale : **le moteur ne contient ni gabarit, ni CSS, ni libellé, ni locale codée en dur.** Toute présentation (HTML, textes, formats de date, routes d'archives et de tags) vit dans le site. Les plugins fournis (`src/plugins`) ne produisent que des fichiers techniques : RSS, sitemap, robots, security.txt, index de recherche Pagefind, variantes d'images, minification des JS et CSS. Exceptions optionnelles sur le Markdown : `noH1` (contrôle), `frenchSpacing` (espaces insécables) et `images` (`<img>` local → `<picture>`), à activer par le site.
 
 ## Structure
 
@@ -44,6 +44,7 @@ Règle centrale : **le moteur ne contient ni gabarit, ni CSS, ni libellé, ni lo
   - helper `imageCrop url largeur hauteur` : JPEG `nom-<l>x<h>.jpg` recadré (`fit: "cover"`, position `attention` par défaut) au plus grand rectangle du ratio qui tient dans la source, jamais agrandi (images de partage) ;
   - images externes, introuvables, SVG et GIF laissées intactes ;
   - cache `.nugo-cache/images` à la racine du site (clé : contenu + réglages), hors `node_modules` pour survivre à `npm ci` ; les variantes de la sortie sont des liens physiques vers le cache (copie si autre disque) ; les entrées inutilisées sont purgées à chaque build, le serveur de dev ignore ce dossier.
+- `src/plugins/minify.ts` : esbuild `transform` (`minify`, sans transpilation) sur les `.js`, `.mjs` et `.css` de la sortie dans `afterBuild`, hors `*.min.*` et préfixes d'URL `exclude` (par défaut `/pagefind/`) ; esbuild importé dynamiquement.
 - `src/helpers/` : `paginate`, `groupBy`, `groupByDate`, `taxonomy`, `latestUpdate`, `slugify`, `absoluteUrl`, `escapeXml`, `safeJson`.
 - `src/dev/DevServer.ts` :
   - serveur `node:http` ;

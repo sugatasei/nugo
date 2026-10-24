@@ -34,6 +34,7 @@
         "test": "node --test \"test/**/*.test.ts\""
     },
     "dependencies": {
+        "esbuild": "^0.28.2",
         "handlebars": "^4.7.9",
         "image-size": "^2.0.4",
         "mdast-util-to-hast": "^13.2.1",
