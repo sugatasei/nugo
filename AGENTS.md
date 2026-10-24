@@ -41,8 +41,9 @@ Règle centrale : **le moteur ne contient ni gabarit, ni CSS, ni libellé, ni lo
   - dimensions lues en synchrone (`image-size`) pendant le rendu, encodage `sharp` (import dynamique) dans `afterBuild` ;
   - variantes `nom-<largeur>w.webp` + repli `.jpg` (`.png` si transparence) à côté de l'original, plafonnées à la largeur d'origine ;
   - rehype : `<img>` local → `<picture>` ; helper `image` qui donne les données (`src`, `srcset`, `sources`, `width`, `height`) aux gabarits ;
+  - helper `imageCrop url largeur hauteur` : JPEG `nom-<l>x<h>.jpg` recadré (`fit: "cover"`, position `attention` par défaut) au plus grand rectangle du ratio qui tient dans la source, jamais agrandi (images de partage) ;
   - images externes, introuvables, SVG et GIF laissées intactes ;
-  - cache `node_modules/.cache/nugo/images` (clé : contenu + réglages).
+  - cache `.nugo-cache/images` à la racine du site (clé : contenu + réglages), hors `node_modules` pour survivre à `npm ci` ; les entrées inutilisées sont purgées à chaque build, le serveur de dev ignore ce dossier.
 - `src/helpers/` : `paginate`, `groupBy`, `groupByDate`, `taxonomy`, `latestUpdate`, `slugify`, `absoluteUrl`, `escapeXml`, `safeJson`.
 - `src/dev/DevServer.ts` :
   - serveur `node:http` ;

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { after, describe, it } from "node:test";
@@ -109,14 +109,50 @@ describe("images", () => {
             "content/blog/post/photo.png": photo(600, 400),
             "templates/post.hbs": "{{{entry.html}}}",
         });
-        const cacheDir = join(root, "node_modules/.cache/nugo/images");
+        const cacheDir = join(root, ".nugo-cache/images");
 
         await build(root, setup());
         const cached = readdirSync(cacheDir).sort();
         assert.equal(cached.length, 4);
 
+        // un encodage déjà en cache n'est pas refait : le fichier garde sa date
+        const modified = cached.map((name) => statSync(join(cacheDir, name)).mtimeMs);
         await build(root, setup());
         assert.deepEqual(readdirSync(cacheDir).sort(), cached);
+        assert.deepEqual(cached.map((name) => statSync(join(cacheDir, name)).mtimeMs), modified);
         assert.ok(existsSync(join(root, "build/blog/post/photo-600w.webp")));
+
+        // l'image change : nouveaux encodages, les anciens sont retirés du cache
+        writeFileSync(join(root, "content/blog/post/photo.png"), await photo(600, 400, true));
+        await build(root, setup());
+        const renewed = readdirSync(cacheDir);
+        assert.equal(renewed.length, 4);
+        assert.ok(renewed.every((name) => !cached.includes(name)));
+    });
+
+    it("crops images to a fixed ratio without enlarging them", async () => {
+        const crop = "{{#with (imageCrop cover 1200 630)}}{{src}} {{width}}x{{height}} {{type}}{{else}}none{{/with}}";
+        const root = await site({
+            "content/blog/large/index.md": "---\ncover: cover.png\n---\n",
+            "content/blog/large/cover.png": photo(1600, 1200),
+            "content/blog/small/index.md": "---\ncover: cover.png\n---\n",
+            "content/blog/small/cover.png": photo(800, 300, true),
+            "content/blog/ratio/index.md": "---\ncover: cover.png\n---\n",
+            "content/blog/ratio/cover.png": photo(2400, 1260),
+            "content/blog/external/index.md": "---\ncover: https://cdn.example.com/cover.jpg\n---\n",
+            "templates/post.hbs": crop,
+        });
+
+        await build(root, setup());
+
+        assert.equal(read(root, "blog/large/index.html"), "/blog/large/cover-1200x630.jpg 1200x630 image/jpeg");
+        assert.equal(read(root, "blog/small/index.html"), "/blog/small/cover-571x300.jpg 571x300 image/jpeg");
+        assert.equal(read(root, "blog/ratio/index.html"), "/blog/ratio/cover-1200x630.jpg 1200x630 image/jpeg");
+        assert.equal(read(root, "blog/external/index.html"), "none");
+
+        for (const [path, size] of [["large", [1200, 630]], ["small", [571, 300]], ["ratio", [1200, 630]]] as const) {
+            const metadata = await sharp(join(root, "build/blog", path, `cover-${size[0]}x${size[1]}.jpg`)).metadata();
+            assert.deepEqual([metadata.format, metadata.width, metadata.height], ["jpeg", ...size]);
+        }
     });
 });

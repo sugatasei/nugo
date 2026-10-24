@@ -3,3 +3,4 @@ dist/
 example/build/
 example/node_modules/
 .nugo.lock
+.nugo-cache/

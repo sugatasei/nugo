@@ -143,7 +143,7 @@ Aucun de ces plugins ne produit de HTML de présentation : seul `images` transfo
 | `securityTxt({ contact, preferredLanguages? })` | `.well-known/security.txt` |
 | `search({ language, collections?, sections?, meta?, filters?, sort? })` | Index [Pagefind](https://pagefind.app) et son interface dans `pagefind/` |
 | `frenchSpacing()` | Rend insécables les espaces de la typographie française (fine avant `; ! ? »`, normale avant `:` et après `«`), dans le texte Markdown seulement. |
-| `images({ widths?, sizes?, quality?, helper?, cacheDir? })` | Variantes WebP + JPEG des images locales, `<picture>` dans le Markdown, helper `image` pour les gabarits (voir [Images](#images)). |
+| `images({ widths?, sizes?, quality?, helper?, cropHelper?, crop?, cacheDir? })` | Variantes WebP + JPEG des images locales, `<picture>` dans le Markdown, helpers `image` et `imageCrop` pour les gabarits (voir [Images](#images)). |
 | `noH1()` | Fait échouer le build si le corps d'un article contient un `#` (quand le gabarit affiche déjà le titre). |
 
 ## Étendre le moteur : un exemple
@@ -201,8 +201,18 @@ Le plugin `images` génère, au build, des variantes de chaque image **hébergé
 {{/with}}
 ```
 
+- **Image de partage :** `imageCrop url largeur hauteur` donne une image JPEG recadrée au ratio demandé (zone gardée : option `crop.position`, `"attention"` par défaut), réduite si elle est plus grande, jamais agrandie. Pour Open Graph :
+
+```hbs
+{{#with (imageCrop cover 1200 630)}}
+<meta property="og:image" content="{{absoluteUrl src}}">
+<meta property="og:image:width" content="{{width}}">
+<meta property="og:image:height" content="{{height}}">
+{{/with}}
+```
+
 - **Laissées intactes :** les images externes (`https:`, `//…`, `data:`), introuvables, SVG et GIF. Le helper retourne alors `undefined` (branche `{{else}}`).
-- **Cache :** les encodages sont gardés dans `node_modules/.cache/nugo/images` ; un rebuild ne réencode que les images nouvelles ou modifiées.
+- **Cache :** les encodages sont gardés dans `.nugo-cache/images` à la racine du site (option `cacheDir`), sous une clé tirée du contenu de l'image et des réglages : un rebuild ne réencode que les images nouvelles ou modifiées, et retire du cache celles qui ne servent plus. Le dossier est hors de `node_modules` pour survivre à un `npm ci` ; l'ajouter au `.gitignore` du site.
 
 ## Site d'exemple
 

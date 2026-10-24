@@ -30,7 +30,7 @@ const CONTENT_TYPES: Readonly<Record<string, string>> = {
 
 const RELOAD_PATH = "/__nugo/reload";
 const RELOAD_SCRIPT = `<script>new EventSource("${RELOAD_PATH}").onmessage = () => location.reload();</script>`;
-const IGNORED = new Set(["node_modules", ".git"]);
+const IGNORED = new Set(["node_modules", ".git", ".nugo-cache"]);
 
 export interface DevServerOptions {
     readonly root: string;

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import type { Element, Root } from "hast";
@@ -18,7 +18,11 @@ export interface ImagesOptions {
     readonly quality?: { readonly webp?: number; readonly jpeg?: number };
     // nom du helper Handlebars qui donne les variantes d'une URL (ex. une cover)
     readonly helper?: string;
-    // relatif à la racine du site
+    // nom du helper qui recadre une URL à des dimensions fixes (ex. image de partage 1200×630)
+    readonly cropHelper?: string;
+    // zone gardée au recadrage (position sharp) : "attention" par défaut, ou "centre", "north"…
+    readonly crop?: { readonly position?: string };
+    // relatif à la racine du site, hors node_modules pour survivre à un `npm ci` ; à ignorer dans git
     readonly cacheDir?: string;
 }
 
@@ -36,6 +40,14 @@ export interface ResponsiveImage {
     readonly sources: readonly ImageSource[];
 }
 
+// image recadrée au ratio demandé, réduite sans jamais être agrandie
+export interface CroppedImage {
+    readonly src: string;
+    readonly width: number;
+    readonly height: number;
+    readonly type: string;
+}
+
 type Format = "webp" | "jpeg" | "png";
 
 interface Variant {
@@ -43,7 +55,16 @@ interface Variant {
     readonly file: string;
     readonly hash: string;
     readonly width: number;
+    // défini pour un recadrage
+    readonly height?: number;
     readonly format: Format;
+}
+
+interface SourceImage {
+    readonly hash: string;
+    readonly width: number;
+    readonly height: number;
+    readonly alpha: boolean;
 }
 
 const DEFAULT_WIDTHS = [480, 800, 1200, 1600];
@@ -69,7 +90,9 @@ function hasAlpha(buffer: Buffer, type: string): boolean {
 // variantes d'un build : planifiées pendant le rendu, encodées dans afterBuild
 class ImageSet {
     readonly variants = new Map<string, Variant>();
+    private readonly sources = new Map<string, SourceImage | undefined>();
     private readonly planned = new Map<string, ResponsiveImage | undefined>();
+    private readonly crops = new Map<string, CroppedImage | undefined>();
     private readonly widths: readonly number[];
 
     constructor(widths: readonly number[]) {
@@ -84,31 +107,88 @@ class ImageSet {
         return this.planned.get(url);
     }
 
-    private compute(url: string, file: string): ResponsiveImage | undefined {
+    crop(url: string, file: string, width: number, height: number): CroppedImage | undefined {
+        const key = `${url} ${width}x${height}`;
+
+        if (!this.crops.has(key)) {
+            this.crops.set(key, this.computeCrop(url, file, width, height));
+        }
+
+        return this.crops.get(key);
+    }
+
+    private inspect(file: string): SourceImage | undefined {
+        if (this.sources.has(file)) {
+            return this.sources.get(file);
+        }
+
         const buffer = readFileSync(file);
-        let size: ReturnType<typeof imageSize>;
+        let source: SourceImage | undefined;
 
         try {
-            size = imageSize(buffer);
+            const size = imageSize(buffer);
+
+            if (size.type && SUPPORTED_TYPES.has(size.type) && size.width && size.height) {
+                // orientation EXIF 5 à 8 : l'image affichée est tournée d'un quart de tour
+                const rotated = (size.orientation ?? 1) >= 5;
+
+                source = {
+                    hash: createHash("sha1").update(buffer).digest("hex"),
+                    width: rotated ? size.height : size.width,
+                    height: rotated ? size.width : size.height,
+                    alpha: hasAlpha(buffer, size.type),
+                };
+            }
         } catch {
+            source = undefined;
+        }
+
+        this.sources.set(file, source);
+
+        return source;
+    }
+
+    private computeCrop(url: string, file: string, width: number, height: number): CroppedImage | undefined {
+        const source = this.inspect(file);
+
+        if (!source || !(width > 0) || !(height > 0)) {
             return undefined;
         }
 
-        if (!size.type || !SUPPORTED_TYPES.has(size.type) || !size.width || !size.height) {
+        // le plus grand rectangle au ratio demandé qui tient dans la source, plafonné aux dimensions demandées
+        const ratio = width / height;
+        const croppedWidth = Math.min(width, source.width, Math.floor(source.height * ratio));
+        const croppedHeight = Math.round(croppedWidth / ratio);
+        const variant: Variant = {
+            url: `${url.replace(/\.[^./]*$/, "")}-${croppedWidth}x${croppedHeight}.jpg`,
+            file,
+            hash: source.hash,
+            width: croppedWidth,
+            height: croppedHeight,
+            format: "jpeg",
+        };
+
+        this.variants.set(variant.url, variant);
+
+        return { src: variant.url, width: croppedWidth, height: croppedHeight, type: "image/jpeg" };
+    }
+
+    private compute(url: string, file: string): ResponsiveImage | undefined {
+        const source = this.inspect(file);
+
+        if (!source) {
             return undefined;
         }
 
-        // orientation EXIF 5 à 8 : l'image affichée est tournée d'un quart de tour
-        const rotated = (size.orientation ?? 1) >= 5;
-        const original = { width: rotated ? size.height : size.width, height: rotated ? size.width : size.height };
+        const { hash } = source;
+        const original = { width: source.width, height: source.height };
         const widths = this.widths.filter((width) => width < original.width);
 
         if (widths.length < this.widths.length) {
             widths.push(original.width);
         }
 
-        const hash = createHash("sha1").update(buffer).digest("hex");
-        const fallback: Format = hasAlpha(buffer, size.type) ? "png" : "jpeg";
+        const fallback: Format = source.alpha ? "png" : "jpeg";
         const base = url.replace(/\.[^./]*$/, "");
         const srcset = (format: Format): string => widths
             .map((width) => {
@@ -160,20 +240,25 @@ function picture(img: Element, image: ResponsiveImage, sizes: string): Element {
 
 async function encode(variants: Iterable<Variant>, context: BuildContext, options: ImagesOptions): Promise<void> {
     const { default: sharp } = await import("sharp");
-    const cacheDir = resolve(context.root, options.cacheDir ?? "node_modules/.cache/nugo/images");
+    const cacheDir = resolve(context.root, options.cacheDir ?? ".nugo-cache/images");
     const queue = [...variants];
     const quality = { webp: options.quality?.webp ?? 80, jpeg: options.quality?.jpeg ?? 82 };
+    const position = options.crop?.position ?? "attention";
+    const used = new Set<string>();
 
     mkdirSync(cacheDir, { recursive: true });
 
     const run = async (variant: Variant): Promise<void> => {
-        const settings = { width: variant.width, format: variant.format, quality };
+        const settings = { width: variant.width, height: variant.height, format: variant.format, quality, position };
         const key = createHash("sha1").update(variant.hash).update(JSON.stringify(settings)).digest("hex");
         const cached = join(cacheDir, `${key}.${EXTENSIONS[variant.format]}`);
+        used.add(cached);
         const output = join(context.dirs.output, OutputWriter.fileForUrl(variant.url));
 
         if (!existsSync(cached)) {
-            const image = sharp(variant.file).rotate().resize({ width: variant.width, withoutEnlargement: true });
+            const image = sharp(variant.file).rotate().resize(variant.height
+                ? { width: variant.width, height: variant.height, fit: "cover", position }
+                : { width: variant.width, withoutEnlargement: true });
             const encoded = variant.format === "webp"
                 ? image.webp({ quality: quality.webp })
                 : variant.format === "jpeg" ? image.flatten({ background: "#ffffff" }).jpeg({ quality: quality.jpeg, mozjpeg: true }) : image.png({ compressionLevel: 9 });
@@ -198,12 +283,20 @@ async function encode(variants: Iterable<Variant>, context: BuildContext, option
     };
 
     await Promise.all(Array.from({ length: Math.min(availableParallelism(), queue.length) }, worker));
+
+    // les encodages qui ne servent plus à ce build sont supprimés : le cache ne grossit pas indéfiniment
+    for (const name of readdirSync(cacheDir)) {
+        if (!used.has(join(cacheDir, name))) {
+            rmSync(join(cacheDir, name), { force: true });
+        }
+    }
 }
 
 /**
  * Variantes des images locales (plusieurs largeurs, WebP + repli JPEG, PNG si transparence).
  * Dans le Markdown, chaque <img> local devient un <picture> ; les images externes restent intactes.
- * Les gabarits obtiennent les mêmes données avec le helper `image` (ex. {{#with (image cover)}}).
+ * Les gabarits obtiennent les mêmes données avec le helper `image` (ex. {{#with (image cover)}}),
+ * et une image recadrée à dimensions fixes avec `imageCrop` (ex. {{#with (imageCrop cover 1200 630)}} pour og:image).
  * Les encodages sont mis en cache, le serveur de dev ne refait que les nouveaux.
  */
 export function images(options: ImagesOptions = {}): NugoPlugin {
@@ -252,6 +345,10 @@ export function images(options: ImagesOptions = {}): NugoPlugin {
             .helper(options.helper ?? "image", (url: unknown) => {
                 const file = typeof url === "string" ? context?.assetFile(url) : undefined;
                 return file ? set?.plan(url as string, file) : undefined;
+            })
+            .helper(options.cropHelper ?? "imageCrop", (url: unknown, width: unknown, height: unknown) => {
+                const file = typeof url === "string" ? context?.assetFile(url) : undefined;
+                return file ? set?.crop(url as string, file, Number(width), Number(height)) : undefined;
             })
             .on("afterBuild", async (build) => {
                 if (set?.variants.size) {
