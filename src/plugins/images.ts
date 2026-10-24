@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync } from "node:fs";
+import { copyFileSync, existsSync, linkSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import type { Element, Root } from "hast";
@@ -238,6 +238,15 @@ function picture(img: Element, image: ResponsiveImage, sizes: string): Element {
     };
 }
 
+// lien physique vers le cache : le contenu n'existe qu'une fois sur le disque ; copie si le cache est sur un autre disque
+function linkOrCopy(source: string, destination: string): void {
+    try {
+        linkSync(source, destination);
+    } catch {
+        copyFileSync(source, destination);
+    }
+}
+
 async function encode(variants: Iterable<Variant>, context: BuildContext, options: ImagesOptions): Promise<void> {
     const { default: sharp } = await import("sharp");
     const cacheDir = resolve(context.root, options.cacheDir ?? ".nugo-cache/images");
@@ -273,7 +282,7 @@ async function encode(variants: Iterable<Variant>, context: BuildContext, option
         }
 
         mkdirSync(dirname(output), { recursive: true });
-        copyFileSync(cached, output);
+        linkOrCopy(cached, output);
     };
 
     const worker = async (): Promise<void> => {

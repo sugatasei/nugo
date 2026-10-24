@@ -212,7 +212,7 @@ Le plugin `images` génère, au build, des variantes de chaque image **hébergé
 ```
 
 - **Laissées intactes :** les images externes (`https:`, `//…`, `data:`), introuvables, SVG et GIF. Le helper retourne alors `undefined` (branche `{{else}}`).
-- **Cache :** les encodages sont gardés dans `.nugo-cache/images` à la racine du site (option `cacheDir`), sous une clé tirée du contenu de l'image et des réglages : un rebuild ne réencode que les images nouvelles ou modifiées, et retire du cache celles qui ne servent plus. Le dossier est hors de `node_modules` pour survivre à un `npm ci` ; l'ajouter au `.gitignore` du site.
+- **Cache :** les encodages sont gardés dans `.nugo-cache/images` à la racine du site (option `cacheDir`), sous une clé tirée du contenu de l'image et des réglages : un rebuild ne réencode que les images nouvelles ou modifiées, et retire du cache celles qui ne servent plus. Les variantes de la sortie sont des liens physiques vers le cache : leur contenu n'est stocké qu'une fois sur le disque, même avec plusieurs dossiers de build (copie si le cache est sur un autre disque). Un hook ne doit donc pas modifier ces fichiers en place. Le dossier est hors de `node_modules` pour survivre à un `npm ci` ; l'ajouter au `.gitignore` du site.
 
 ## Site d'exemple
 

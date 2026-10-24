@@ -120,7 +120,9 @@ describe("images", () => {
         await build(root, setup());
         assert.deepEqual(readdirSync(cacheDir).sort(), cached);
         assert.deepEqual(cached.map((name) => statSync(join(cacheDir, name)).mtimeMs), modified);
-        assert.ok(existsSync(join(root, "build/blog/post/photo-600w.webp")));
+        // la variante de la sortie partage le fichier du cache (lien physique), sans doublon sur le disque
+        const output = statSync(join(root, "build/blog/post/photo-600w.webp"));
+        assert.ok(cached.some((name) => statSync(join(cacheDir, name)).ino === output.ino));
 
         // l'image change : nouveaux encodages, les anciens sont retirés du cache
         writeFileSync(join(root, "content/blog/post/photo.png"), await photo(600, 400, true));
