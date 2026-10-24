@@ -1,5 +1,5 @@
 <article>
-    {{#if data.cover}}<img src="{{data.cover}}" alt="" loading="lazy">{{/if}}
+    {{#if data.cover}}{{> picture src=data.cover alt="" sizes="(min-width: 1200px) 1130px, 100vw"}}{{/if}}
 
     <header>
         <h2><a href="{{url}}">{{data.title}}</a></h2>

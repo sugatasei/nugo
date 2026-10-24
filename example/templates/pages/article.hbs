@@ -1,6 +1,6 @@
 <main class="container">
     <article>
-        {{#if cover}}<img src="{{cover}}" alt="">{{/if}}
+        {{#if cover}}{{> picture src=cover alt="" sizes="(min-width: 1200px) 1130px, 100vw" eager=true}}{{/if}}
 
         <header>
             <h1>{{title}}</h1>

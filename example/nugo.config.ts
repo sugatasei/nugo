@@ -1,5 +1,5 @@
 import { absoluteUrl, defineConfig, type HelperOptions, groupByDate, latestUpdate, paginate, safeJson, slugify, taxonomy, z, type Entry, type PageSpec } from "nugo";
-import { noH1, robots, rss, search, securityTxt, sitemap } from "nugo/plugins";
+import { images, noH1, robots, rss, search, securityTxt, sitemap } from "nugo/plugins";
 import { countLabel, formatDate, formatMonth, LOCALE, monthArchiveTitle } from "./lib/format.ts";
 import { callouts } from "./plugins/callouts.ts";
 
@@ -131,6 +131,8 @@ export default defineConfig((nugo) => {
 
     nugo
         .use(noH1())
+        // variantes WebP + JPEG des images locales ; les covers passent par le partial « picture »
+        .use(images({ sizes: "(min-width: 1200px) 720px, 100vw" }))
         .use(callouts({ labels: { note: "Note", tip: "Astuce", warning: "Attention" } }))
         .use(rss({ collection: "posts", language: "fr" }))
         // tags en minuscules : « Nugo » et « nugo » forment un seul filtre, comme sur les pages de tags

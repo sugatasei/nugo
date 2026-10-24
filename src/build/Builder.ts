@@ -1,7 +1,7 @@
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import type { ResolvedConfig } from "../config/ConfigBuilder.ts";
-import { ContentScanner, type Collections } from "../content/ContentScanner.ts";
+import { ContentScanner, type Collections, type ScanResult } from "../content/ContentScanner.ts";
 import { absoluteUrl } from "../helpers/text.ts";
 import { MarkdownRenderer } from "../markdown/MarkdownRenderer.ts";
 import { TemplateRenderer } from "../templates/TemplateRenderer.ts";
@@ -22,6 +22,7 @@ class Build implements BuildContext {
     readonly pages: RenderedPage[] = [];
     entries: readonly Entry[] = [];
     private collections: Collections = new Map();
+    private assets: ReadonlyMap<string, string> = new Map();
     private readonly templates: TemplateRenderer;
 
     constructor(root: string, dirs: Dirs, site: Site, templates: TemplateRenderer) {
@@ -31,8 +32,9 @@ class Build implements BuildContext {
         this.templates = templates;
     }
 
-    setCollections(collections: Collections): void {
+    setScan({ collections, assets }: ScanResult): void {
         this.collections = collections;
+        this.assets = assets;
         this.entries = [...collections.values()].flat();
     }
 
@@ -56,6 +58,21 @@ class Build implements BuildContext {
 
     absoluteUrl(path: string): string {
         return absoluteUrl(this.site.url, path);
+    }
+
+    assetFile(url: string): string | undefined {
+        const known = this.assets.get(url);
+
+        if (known || !url.startsWith("/") || url.startsWith("//")) {
+            return known;
+        }
+
+        try {
+            const file = join(this.dirs.public, OutputWriter.fileForUrl(url));
+            return url.endsWith("/") || !existsSync(file) || !statSync(file).isFile() ? undefined : file;
+        } catch {
+            return undefined;
+        }
     }
 }
 
@@ -97,7 +114,7 @@ export class Builder {
         }
 
         const markdown = new MarkdownRenderer(config.markdown, config.remarkPlugins, config.rehypePlugins);
-        build.setCollections(await ContentScanner.scan(config.collections, dirs, markdown, config.frontMatter));
+        build.setScan(await ContentScanner.scan(config.collections, dirs, markdown, config.frontMatter));
 
         const renderPage = (spec: PageSpec, entry?: Entry): void => {
             const file = OutputWriter.fileForUrl(spec.url);

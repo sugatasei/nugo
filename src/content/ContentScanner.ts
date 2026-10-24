@@ -9,19 +9,26 @@ import { FrontMatter, type FrontMatterDelimiters } from "./FrontMatter.ts";
 
 export type Collections = ReadonlyMap<string, readonly Entry[]>;
 
+export interface ScanResult {
+    readonly collections: Collections;
+    // URL publique → fichier source, pour chaque champ d'asset résolu
+    readonly assets: ReadonlyMap<string, string>;
+}
+
 export class ContentScanner {
     static async scan(
         collections: ReadonlyMap<string, CollectionOptions>,
         dirs: Dirs,
         markdown: MarkdownRenderer,
         delimiters?: FrontMatterDelimiters,
-    ): Promise<Collections> {
+    ): Promise<ScanResult> {
         const grouped = new Map<string, Entry[]>([...collections.keys()].map((name) => [name, []]));
+        const assets = new Map<string, string>();
 
         for (const filePath of FileSystem.getFiles(dirs.content).filter((path) => path.endsWith(".md")).sort()) {
             const src = relative(dirs.content, filePath).split(sep).join("/");
             const [name, options] = this.findCollection(collections, src);
-            const entry = await this.readEntry(filePath, src, name, options, dirs, markdown, delimiters);
+            const entry = await this.readEntry(filePath, src, name, options, dirs, markdown, assets, delimiters);
 
             grouped.get(name)?.push(entry);
         }
@@ -34,7 +41,7 @@ export class ContentScanner {
             }
         }
 
-        return grouped;
+        return { collections: grouped, assets };
     }
 
     static normalizeDir(dir: string): string {
@@ -71,6 +78,7 @@ export class ContentScanner {
         options: CollectionOptions,
         dirs: Dirs,
         markdown: MarkdownRenderer,
+        assets: Map<string, string>,
         delimiters?: FrontMatterDelimiters,
     ): Promise<Entry> {
         const { data: rawData, body } = FrontMatter.parse(readFileSync(filePath, "utf-8"), filePath, delimiters);
@@ -89,12 +97,14 @@ export class ContentScanner {
         const colocated = src === "index.md" || src.endsWith("/index.md");
 
         for (const field of options.assetFields ?? []) {
-            data[field] = AssetResolver.resolve(data[field], {
-                sourceFile: filePath,
-                entryUrl: url,
-                colocated,
-                publicDir: dirs.public,
-            });
+            const location = { sourceFile: filePath, entryUrl: url, colocated, publicDir: dirs.public };
+            const asset = AssetResolver.locate(data[field], location);
+
+            if (asset) {
+                assets.set(asset.url, asset.file);
+            }
+
+            data[field] = asset?.url ?? AssetResolver.resolve(data[field], location);
         }
 
         const { html, text, sections, meta } = await markdown.render(body, filePath, { ...source, url });

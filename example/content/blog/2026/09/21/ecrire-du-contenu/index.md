@@ -1,6 +1,7 @@
 ---
 title: Écrire du contenu
 date: 2026-09-21
+cover: paysage.jpg
 summary: Front matter, Markdown GFM et encadrés ajoutés par un plugin du site.
 tags:
   - Nugo
@@ -21,3 +22,9 @@ Le front matter est validé par le schéma Zod de la collection : un article san
 | `~~barré~~` | ~~barré~~ |
 
 > Une citation sans marqueur reste une citation.
+
+## Images
+
+Une image locale devient un `<picture>` : plusieurs largeurs en WebP, avec un repli JPEG. Une image externe reste telle quelle.
+
+![Paysage stylisé au coucher du soleil](paysage.jpg)

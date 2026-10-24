@@ -79,6 +79,8 @@ export interface BuildContext {
     collection(name: string): readonly Entry[];
     render(template: string, context?: Readonly<Record<string, unknown>>): string;
     absoluteUrl(path: string): string;
+    // fichier source d'une URL locale : champ d'asset résolu, sinon fichier de public/
+    assetFile(url: string): string | undefined;
 }
 
 export interface MarkdownOptions {

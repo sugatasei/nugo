@@ -6,7 +6,7 @@ Contexte persistant du projet, à tenir à jour à chaque étape terminée.
 
 Moteur de site statique distribué comme dépendance git (`git+https://github.com/sugatasei/nugo.git`, compilé par `prepare`). Il est consommé par un site qui fournit `nugo.config.ts`, ses gabarits, ses styles et ses extensions.
 
-Règle centrale : **le moteur ne contient ni gabarit, ni CSS, ni libellé, ni locale codée en dur.** Toute présentation (HTML, textes, formats de date, routes d'archives et de tags) vit dans le site. Les plugins fournis (`src/plugins`) ne produisent que des fichiers techniques : RSS, sitemap, robots, security.txt, index de recherche Pagefind. Exceptions optionnelles sur le Markdown : `noH1` (contrôle) et `frenchSpacing` (espaces insécables, à activer par le site).
+Règle centrale : **le moteur ne contient ni gabarit, ni CSS, ni libellé, ni locale codée en dur.** Toute présentation (HTML, textes, formats de date, routes d'archives et de tags) vit dans le site. Les plugins fournis (`src/plugins`) ne produisent que des fichiers techniques : RSS, sitemap, robots, security.txt, index de recherche Pagefind, variantes d'images. Exceptions optionnelles sur le Markdown : `noH1` (contrôle), `frenchSpacing` (espaces insécables) et `images` (`<img>` local → `<picture>`), à activer par le site.
 
 ## Structure
 
@@ -20,7 +20,8 @@ Règle centrale : **le moteur ne contient ni gabarit, ni CSS, ni libellé, ni lo
 - `src/content/` :
   - `FrontMatter` remplace le front matter par des lignes vides pour garder des numéros de ligne exacts ;
   - `ContentScanner` affecte chaque fichier à une collection (dossier le plus spécifique), le valide avec Zod, calcule le permalink, résout `assetFields` et rend le Markdown ;
-  - `AssetResolver`.
+  - `AssetResolver` : `resolve` (URL publique, URL externe gardée) et `locate` (URL + fichier source, local uniquement) ;
+  - le scan retourne aussi la table URL → fichier des `assetFields`, exposée par `BuildContext.assetFile(url)` (sinon fichier de `public/`).
 - `src/markdown/MarkdownRenderer.ts` :
   - pipeline unified : remark-parse, GFM, retrait du HTML de l'auteur, plugins du site, remark-rehype, plugins rehype, stringify ;
   - `file.data` est exposé en `entry.meta`.
@@ -36,6 +37,12 @@ Règle centrale : **le moteur ne contient ni gabarit, ni CSS, ni libellé, ni lo
 - `src/markdown/MarkdownText.ts` : texte brut de l'arbre mdast (`entry.text`). Le HTML brut est ignoré, et `data.searchText` remplace le contenu d'un nœud. Expose aussi les types `hName` / `hProperties` (`mdast-util-to-hast`).
 - `src/markdown/HeadingIds.ts` : `id` des titres calculé dans l'arbre mdast (`slugify`, dédoublonné), après les plugins du site. Le même id sert au HTML et à `entry.sections`.
 - `src/plugins/search.ts` : index Pagefind via `addCustomRecord` (texte Markdown + front matter), un enregistrement par section (`url#ancre`), écrit dans `afterBuild`.
+- `src/plugins/images.ts` :
+  - dimensions lues en synchrone (`image-size`) pendant le rendu, encodage `sharp` (import dynamique) dans `afterBuild` ;
+  - variantes `nom-<largeur>w.webp` + repli `.jpg` (`.png` si transparence) à côté de l'original, plafonnées à la largeur d'origine ;
+  - rehype : `<img>` local → `<picture>` ; helper `image` qui donne les données (`src`, `srcset`, `sources`, `width`, `height`) aux gabarits ;
+  - images externes, introuvables, SVG et GIF laissées intactes ;
+  - cache `node_modules/.cache/nugo/images` (clé : contenu + réglages).
 - `src/helpers/` : `paginate`, `groupBy`, `groupByDate`, `taxonomy`, `latestUpdate`, `slugify`, `absoluteUrl`, `escapeXml`, `safeJson`.
 - `src/dev/DevServer.ts` :
   - serveur `node:http` ;
@@ -47,6 +54,7 @@ Règle centrale : **le moteur ne contient ni gabarit, ni CSS, ni libellé, ni lo
   - Style : Pico CSS, copié par `passthrough`.
   - Recherche : plugin `search` (Pagefind), interface ouverte dans une boîte de dialogue (`public/search.js`).
   - Plugin d'encadrés `> [!NOTE]` dans `example/plugins/callouts.ts`.
+  - Images : plugin `images`, covers rendues par le partial `picture.hbs`.
 
 ## Conventions
 

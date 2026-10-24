@@ -133,7 +133,7 @@ Le moteur n'enregistre que deux helpers, purement techniques :
 
 ## Plugins fournis (`nugo/plugins`)
 
-Aucun de ces plugins ne produit de HTML.
+Aucun de ces plugins ne produit de HTML de présentation : seul `images` transforme le rendu du Markdown (`<img>` → `<picture>`).
 
 | Plugin | Sortie |
 |---|---|
@@ -143,6 +143,7 @@ Aucun de ces plugins ne produit de HTML.
 | `securityTxt({ contact, preferredLanguages? })` | `.well-known/security.txt` |
 | `search({ language, collections?, sections?, meta?, filters?, sort? })` | Index [Pagefind](https://pagefind.app) et son interface dans `pagefind/` |
 | `frenchSpacing()` | Rend insécables les espaces de la typographie française (fine avant `; ! ? »`, normale avant `:` et après `«`), dans le texte Markdown seulement. |
+| `images({ widths?, sizes?, quality?, helper?, cacheDir? })` | Variantes WebP + JPEG des images locales, `<picture>` dans le Markdown, helper `image` pour les gabarits (voir [Images](#images)). |
 | `noH1()` | Fait échouer le build si le corps d'un article contient un `#` (quand le gabarit affiche déjà le titre). |
 
 ## Étendre le moteur : un exemple
@@ -182,6 +183,26 @@ Le HTML brut ne compte pas dans le texte. Un plugin qui produit des nœuds `html
 parent.children.splice(index, 1, { type: "html", value: rendered, data: { searchText: label } });
 ```
 
+## Images
+
+Le plugin `images` génère, au build, des variantes de chaque image **hébergée par le site** (fichier voisin d'un `index.md` ou de `public/`) :
+
+- **Largeurs :** `widths` (par défaut `[480, 800, 1200, 1600]`), jamais plus large que l'original. Une image plus étroite que toutes les largeurs garde sa taille.
+- **Formats :** WebP, avec un repli JPEG (PNG si l'image a de la transparence). Fichiers écrits à côté de l'original : `photo-800w.webp`, `photo-800w.jpg`. L'original reste copié.
+- **Markdown :** chaque `<img>` local devient un `<picture>` (`srcset`, `sizes` de l'option, `width`/`height`, `loading="lazy"`).
+- **Gabarits :** le helper `image` donne les données, le site écrit son HTML :
+
+```hbs
+{{#with (image cover)}}
+<picture>
+    {{#each sources}}<source type="{{type}}" srcset="{{srcset}}" sizes="100vw">{{/each}}
+    <img src="{{src}}" srcset="{{srcset}}" sizes="100vw" width="{{width}}" height="{{height}}" alt="">
+</picture>
+{{/with}}
+```
+
+- **Laissées intactes :** les images externes (`https:`, `//…`, `data:`), introuvables, SVG et GIF. Le helper retourne alors `undefined` (branche `{{else}}`).
+- **Cache :** les encodages sont gardés dans `node_modules/.cache/nugo/images` ; un rebuild ne réencode que les images nouvelles ou modifiées.
 
 ## Site d'exemple
 
@@ -191,7 +212,7 @@ parent.children.splice(index, 1, { type: "html", value: rendered, data: { search
 - archives par année, mois et jour, avec navigation entre les mois ;
 - tags, 404, RSS, sitemap, robots.txt, security.txt ;
 - balises Open Graph et Twitter, JSON-LD `WebSite` et `BlogPosting` (`templates/partials/seo.hbs`) ;
-- covers co-localisées.
+- covers co-localisées, en `<picture>` via le plugin `images` (`templates/partials/picture.hbs`).
 
 Le style vient de [Pico CSS](https://picocss.com), copié depuis `node_modules` avec `passthrough`. `public/site.css` ne contient que quelques ajouts.
 
