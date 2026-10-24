@@ -130,6 +130,12 @@ describe("images", () => {
         const renewed = readdirSync(cacheDir);
         assert.equal(renewed.length, 4);
         assert.ok(renewed.every((name) => !cached.includes(name)));
+
+        // plus aucune image : le cache est vidé
+        rmSync(join(root, "content/blog/post/photo.png"));
+        writeFileSync(join(root, "content/blog/post/index.md"), "Texte");
+        await build(root, setup());
+        assert.deepEqual(readdirSync(cacheDir), []);
     });
 
     it("crops images to a fixed ratio without enlarging them", async () => {

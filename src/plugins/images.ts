@@ -248,7 +248,8 @@ function linkOrCopy(source: string, destination: string): void {
 }
 
 async function encode(variants: Iterable<Variant>, context: BuildContext, options: ImagesOptions): Promise<void> {
-    const { default: sharp } = await import("sharp");
+    // sharp n'est chargé qu'au premier encodage manquant
+    let loading: Promise<typeof import("sharp")> | undefined;
     const cacheDir = resolve(context.root, options.cacheDir ?? ".nugo-cache/images");
     const queue = [...variants];
     const quality = { webp: options.quality?.webp ?? 80, jpeg: options.quality?.jpeg ?? 82 };
@@ -265,6 +266,7 @@ async function encode(variants: Iterable<Variant>, context: BuildContext, option
         const output = join(context.dirs.output, OutputWriter.fileForUrl(variant.url));
 
         if (!existsSync(cached)) {
+            const { default: sharp } = await (loading ??= import("sharp"));
             const image = sharp(variant.file).rotate().resize(variant.height
                 ? { width: variant.width, height: variant.height, fit: "cover", position }
                 : { width: variant.width, withoutEnlargement: true });
@@ -359,10 +361,9 @@ export function images(options: ImagesOptions = {}): NugoPlugin {
                 const file = typeof url === "string" ? context?.assetFile(url) : undefined;
                 return file ? set?.crop(url as string, file, Number(width), Number(height)) : undefined;
             })
+            // même sans image, pour purger le cache des images supprimées
             .on("afterBuild", async (build) => {
-                if (set?.variants.size) {
-                    await encode(set.variants.values(), build, options);
-                }
+                await encode(set?.variants.values() ?? [], build, options);
             });
     };
 }
