@@ -116,6 +116,16 @@ describe("Builder", () => {
         }), /about\/index\.html has more than one source/);
     });
 
+    it("allows a single build at a time and reclaims stale locks", async () => {
+        const root = site(BASE_FILES);
+        writeFileSync(join(root, ".nugo.lock"), String(process.ppid));
+        await assert.rejects(build(root, baseSetup), /Another nugo build is already running/);
+
+        writeFileSync(join(root, ".nugo.lock"), "999999999");
+        await build(root, baseSetup);
+        assert.ok(!existsSync(join(root, ".nugo.lock")));
+    });
+
     it("reports missing templates", async () => {
         const root = site(BASE_FILES);
 

@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { createReadStream, existsSync, readFileSync, statSync, watch } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { extname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { LOCK_FILE } from "../build/BuildLock.ts";
 import { ConfigLoader } from "../config/ConfigLoader.ts";
 
 const CONTENT_TYPES: Readonly<Record<string, string>> = {
@@ -60,7 +61,7 @@ export class DevServer {
         const outputPath = relative(this.options.root, this.outputDir);
 
         watch(this.options.root, { recursive: true }, (_event, filename) => {
-            if (!filename) {
+            if (!filename || filename === LOCK_FILE) {
                 return;
             }
 

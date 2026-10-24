@@ -6,6 +6,7 @@ import { absoluteUrl } from "../helpers/text.ts";
 import { MarkdownRenderer } from "../markdown/MarkdownRenderer.ts";
 import { TemplateRenderer } from "../templates/TemplateRenderer.ts";
 import type { BuildContext, Dirs, Entry, PageSpec, RenderedPage, Site } from "../types.ts";
+import { BuildLock } from "./BuildLock.ts";
 import { FileSystem } from "./FileSystem.ts";
 import { OutputWriter } from "./OutputWriter.ts";
 
@@ -60,6 +61,10 @@ class Build implements BuildContext {
 
 export class Builder {
     static async run(root: string, config: ResolvedConfig): Promise<BuildResult> {
+        return BuildLock.with(resolve(root), () => this.build(root, config));
+    }
+
+    private static async build(root: string, config: ResolvedConfig): Promise<BuildResult> {
         const dirs: Dirs = {
             content: resolve(root, config.dirs.content),
             public: resolve(root, config.dirs.public),

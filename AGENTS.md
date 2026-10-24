@@ -30,6 +30,7 @@ Règle centrale : **le moteur ne contient ni gabarit, ni CSS, ni libellé, ni lo
   - helpers techniques `json` et `absoluteUrl`.
 - `src/build/` :
   - `Builder` : vide la sortie, copie `public/` et les passthrough, lance `beforeBuild`, scanne, rend les pages de collection, les `pages()` puis les `output()`, copie les fichiers voisins des `index.md`, lance `afterBuild` ;
+  - `BuildLock` : verrou `.nugo.lock` (pid) à la racine du site, un seul build à la fois ; un verrou dont le processus est mort est repris ;
   - `OutputWriter` : URL → fichier, détection des collisions ;
   - `FileSystem`.
 - `src/markdown/MarkdownText.ts` : texte brut de l'arbre mdast (`entry.text`). Le HTML brut est ignoré, et `data.searchText` remplace le contenu d'un nœud. Expose aussi les types `hName` / `hProperties` (`mdast-util-to-hast`).
@@ -38,7 +39,7 @@ Règle centrale : **le moteur ne contient ni gabarit, ni CSS, ni libellé, ni lo
 - `src/helpers/` : `paginate`, `groupBy`, `groupByDate`, `taxonomy`, `latestUpdate`, `slugify`, `absoluteUrl`, `escapeXml`, `safeJson`.
 - `src/dev/DevServer.ts` :
   - serveur `node:http` ;
-  - `fs.watch` récursif ;
+  - `fs.watch` récursif (ignore `.nugo.lock`) ;
   - chaque rebuild tourne dans un **processus enfant**, pour que la config et les plugins du site soient relus ;
   - livereload par SSE (`/__nugo/reload`).
 - `test/` : `node --test` sur les `.ts` (type stripping), avec un test du plugin d'encadrés de l'exemple.
