@@ -145,6 +145,7 @@ Aucun de ces plugins ne produit de HTML de présentation : seul `images` transfo
 | `frenchSpacing()` | Rend insécables les espaces de la typographie française (fine avant `; ! ? »`, normale avant `:` et après `«`), dans le texte Markdown seulement. |
 | `images({ widths?, sizes?, quality?, helper?, cropHelper?, crop?, cacheDir? })` | Variantes WebP + JPEG des images locales, `<picture>` dans le Markdown, helpers `image` et `imageCrop` pour les gabarits (voir [Images](#images)). |
 | `minify({ exclude? })` | Minifie avec esbuild les `.js`, `.mjs` et `.css` de la sortie, en fin de build (fichiers `*.min.*` et `exclude`, par défaut `["/pagefind/"]`, laissés intacts). |
+| `fingerprint({ extensions?, length? })` | Ajoute `?v=<empreinte du contenu>` aux URL locales (`src`, `href`) des `.js`, `.mjs` et `.css` dans les pages HTML, pour qu'un cache (navigateur, CDN) ne serve pas une ancienne version. À déclarer après `minify()`. |
 | `noH1()` | Fait échouer le build si le corps d'un article contient un `#` (quand le gabarit affiche déjà le titre). |
 
 ## Étendre le moteur : un exemple

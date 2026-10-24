@@ -1,3 +1,4 @@
+export { fingerprint, type FingerprintOptions } from "./fingerprint.ts";
 export { frenchSpacing } from "./frenchSpacing.ts";
 export { images, type CroppedImage, type ImagesOptions, type ImageSource, type ResponsiveImage } from "./images.ts";
 export { minify, type MinifyOptions } from "./minify.ts";
