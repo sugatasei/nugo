@@ -6,7 +6,7 @@ Le moteur ne fournit **aucun gabarit, aucun style, aucun libellé et aucune loca
 
 ## Installation
 
-Il faut Node 24 ou plus récent. Le site écrit sa configuration en TypeScript, que Node exécute directement grâce au type stripping, sans tsx ni bundler.
+Il faut Node 26 ou plus récent. Le site écrit sa configuration en TypeScript, que Node exécute directement grâce au type stripping, sans tsx ni bundler.
 
 ```sh
 npm install git+https://github.com/sugatasei/nugo.git   # compile automatiquement via le script "prepare"
