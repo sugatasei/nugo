@@ -9,7 +9,7 @@ Le moteur ne fournit **aucun gabarit, aucun style, aucun libellé et aucune loca
 Il faut Node 26 ou plus récent. Le site écrit sa configuration en TypeScript, que Node exécute directement grâce au type stripping, sans tsx ni bundler.
 
 ```sh
-npm install git+https://github.com/sugatasei/nugo.git   # compile automatiquement via le script "prepare"
+npm install git+https://github.com/sugatasei/nugo.git   # dist/ est versionné : rien à compiler
 npx nugo build                                          # génère le site dans build/
 npx nugo dev --port 3000                                # build + serveur + rebuild et rechargement à chaque modification
 ```
@@ -233,7 +233,8 @@ La recherche utilise le plugin `search` : l'interface Pagefind s'ouvre dans une 
 ## Développement du moteur
 
 ```sh
-npm install        # compile dist/
+npm install
+npm run build      # recompile dist/, à committer avec src/ (un test le vérifie)
 npm run typecheck
 npm test           # node --test, sans dépendance de test
 cd example && npm install && npx nugo build
